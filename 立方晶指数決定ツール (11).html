@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>立方晶 面指数決定ツール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0B1220;
+    --panel: #121C30;
+    --panel-2: #0F1729;
+    --line: #24334E;
+    --text: #E7ECF3;
+    --text-dim: #8FA0BE;
+    --teal: #4FD1C5;
+    --amber: #F0B86E;
+    --rose: #E8677D;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    background-image:
+      linear-gradient(rgba(79,209,197,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,209,197,0.035) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color: var(--text);
+    font-family: 'Source Serif 4', Georgia, serif;
+    line-height: 1.6;
+    padding: 48px 20px 80px;
+  }
+  .wrap{ max-width: 760px; margin: 0 auto; }
+
+  .kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--teal);
+    letter-spacing: 0.02em;
+    margin-bottom: 10px;
+  }
+  h1{
+    font-size: 34px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    color: #fff;
+  }
+  .lede{
+    color: var(--text-dim);
+    font-size: 16.5px;
+    max-width: 60ch;
+    margin: 0 0 36px;
+  }
+
+  /* --- triangle hero --- */
+  .hero{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 28px 20px 22px;
+    margin-bottom: 40px;
+  }
+  svg{ display:block; margin: 0 auto; }
+  .vlabel{
+    font-family:'Source Serif 4', serif;
+    font-weight: 600;
+    font-size: 22px;
+    fill: #fff;
+  }
+  .vsub{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    fill: var(--text-dim);
+  }
+  .elabel{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    fill: var(--amber);
+  }
+  .tri-edge{ stroke: var(--line); stroke-width: 1.5; fill: none; }
+  .tri-vertex{ fill: var(--panel-2); stroke: var(--teal); stroke-width: 1.5; }
+
+  /* --- form --- */
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 26px 24px;
+    margin-bottom: 24px;
+  }
+  .panel h2{
+    font-size: 15px;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin: 0 0 18px;
+    text-transform: none;
+  }
+  .row{
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .field{
+    flex: 1 1 140px;
+  }
+  .field label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .field input{
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 15px;
+    padding: 9px 10px;
+    border-radius: 3px;
+  }
+  .field input:focus{
+    outline: none;
+    border-color: var(--teal);
+  }
+  .hkl-group{
+    display:flex;
+    gap: 8px;
+  }
+  .hkl-group input{ text-align:center; }
+
+  .divider{
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 20px 0;
+  }
+
+  button{
+    background: var(--teal);
+    color: #05201D;
+    border: none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 14.5px;
+    font-weight: 600;
+    padding: 12px 22px;
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.01em;
+  }
+  button:hover{ background: #6FE0D6; }
+  button:active{ transform: translateY(1px); }
+
+  .formula{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 14px 16px;
+    margin-top: 4px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* --- results --- */
+  .status{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin: 18px 0 14px;
+  }
+  table{
+    width: 100%;
+    border-collapse: collapse;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13.5px;
+  }
+  th{
+    text-align: left;
+    color: var(--text-dim);
+    font-weight: 500;
+    font-size: 11.5px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  td{
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--panel-2);
+  }
+  tr:hover td{ background: rgba(79,209,197,0.05); }
+  .hkl{ color: #fff; font-weight: 500; }
+  .err-good{ color: var(--teal); }
+  .err-mid{ color: var(--amber); }
+  .err-bad{ color: var(--rose); }
+  .empty{
+    color: var(--text-dim);
+    font-size: 14px;
+    padding: 20px 0;
+  }
+  .note{
+    color: var(--text-dim);
+    font-size: 13.5px;
+    margin-top: 28px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">CUBIC SYSTEM · X線ゴニオメトリー</div>
+  <h1>面間角度から指数を決める</h1>
+  <p class="lede">
+    3つの結晶面 A・B・C がつくる球面三角形の3辺の角度（測角器で測った面間角）を入力すると、
+    立方晶の余弦則を使って矛盾なく成立する指数 (hkl) の組を総当たりで探します。
+  </p>
+
+  <div class="hero">
+    <svg viewBox="0 0 640 300" width="100%" height="260">
+      <path class="tri-edge" d="M 320 40 L 110 250 L 530 250 Z"></path>
+
+      <circle class="tri-vertex" cx="320" cy="40" r="22"></circle>
+      <text x="320" y="47" text-anchor="middle" class="vlabel">A</text>
+
+      <circle class="tri-vertex" cx="110" cy="250" r="22"></circle>
+      <text x="110" y="257" text-anchor="middle" class="vlabel">B</text>
+
+      <circle class="tri-vertex" cx="530" cy="250" r="22"></circle>
+      <text x="530" y="257" text-anchor="middle" class="vlabel">C</text>
+
+      <text x="320" y="20" text-anchor="middle" class="vsub" id="aSub">100</text>
+      <text x="90" y="286" text-anchor="middle" class="vsub">既知面</text>
+      <text x="550" y="286" text-anchor="middle" class="vsub">既知面</text>
+
+      <text x="185" y="130" text-anchor="middle" class="elabel">φAB</text>
+      <text x="460" y="130" text-anchor="middle" class="elabel">φAC</text>
+      <text x="320" y="270" text-anchor="middle" class="elabel">φBC</text>
+    </svg>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="align-items:center;">
+      <label style="display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:14px; color:var(--text); cursor:pointer;">
+        <input type="checkbox" id="sketchEnabled" checked onchange="toggleSketchEnabled()" style="width:auto;">
+        <span style="font-family:'Source Serif 4', serif; font-size:16px; font-weight:600; color:#fff;">自分で描いた図（メモ／近い3点探し）</span>
+      </label>
+    </div>
+
+    <div id="sketchBody">
+      <p style="color:var(--text-dim); font-size:13px; margin:12px 0 14px;">
+        写真やウルフネット上で実際に見えている点の位置関係を、そのままなぞって残せます。
+        「点を打つモード」で複数の点を打つと、「近い3点を探す」ボタンで、打った点のうち最も密集している3点を自動でハイライトできます
+        （あくまでピクセル上の距離なので、実際の角度の代わりにはなりません。目安としてお使いください）。
+      </p>
+
+      <div class="row" style="align-items:center;">
+        <label style="display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--text); cursor:pointer;">
+          <input type="radio" name="sketchMode" id="sketchModeDraw" value="draw" checked onchange="setSketchMode()" style="width:auto;">
+          描くモード（フリーハンド）
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--text); cursor:pointer;">
+          <input type="radio" name="sketchMode" id="sketchModePoint" value="point" onchange="setSketchMode()" style="width:auto;">
+          点を打つモード（近い3点探し用）
+        </label>
+      </div>
+
+      <canvas id="sketchCanvas" width="700" height="380"
+        style="width:100%; height:auto; touch-action:none; background:var(--panel-2); border:1px solid var(--line); border-radius:3px; display:block; cursor:crosshair; margin-top:10px;">
+      </canvas>
+
+      <div class="row" style="margin-top:12px;">
+        <div class="field" style="flex:0 0 auto;">
+          <button type="button" onclick="clearSketch()" style="background:var(--panel-2); color:var(--text-dim); border:1px solid var(--line);">消す</button>
+        </div>
+        <div class="field" style="flex:0 0 auto;">
+          <button type="button" onclick="findNearestTriplet()">近い3点を探す</button>
+        </div>
+      </div>
+      <p style="color:var(--text-dim); font-size:13px; margin:10px 0 0;" id="sketchStatus"></p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>モード</h2>
+    <div class="row" style="align-items:center;">
+      <label style="display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:13.5px; color:var(--text); cursor:pointer;">
+        <input type="radio" name="mode" id="modeKnown" value="known" checked onchange="toggleMode()" style="width:auto;">
+        基準面 A は既知
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:13.5px; color:var(--text); cursor:pointer;">
+        <input type="radio" name="mode" id="modeUnknown" value="unknown" onchange="toggleMode()" style="width:auto;">
+        3点とも指数不明（全探索）
+      </label>
+    </div>
+    <p style="color:var(--text-dim); font-size:13px; margin:10px 0 0;" id="modeNote">
+      A・B・Cのうち少なくとも1面の指数がすでにわかっている場合はこちら。探索が速く、解の絞り込みも安定します。
+    </p>
+  </div>
+
+  <div class="panel" id="knownPanel">
+    <h2>基準面 A（すでに指数がわかっている面）</h2>
+    <div class="row">
+      <div class="field">
+        <label>h</label>
+        <input type="number" id="aH" value="1" step="1">
+      </div>
+      <div class="field">
+        <label>k</label>
+        <input type="number" id="aK" value="0" step="1">
+      </div>
+      <div class="field">
+        <label>l</label>
+        <input type="number" id="aL" value="0" step="1">
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <h2>3辺の実測角度（度）</h2>
+    <div class="row">
+      <div class="field">
+        <label>φAB（A–B間）</label>
+        <input type="number" id="angAB" step="0.01" placeholder="例: 45.00">
+      </div>
+      <div class="field">
+        <label>φAC（A–C間）</label>
+        <input type="number" id="angAC" step="0.01" placeholder="例: 54.74">
+      </div>
+      <div class="field">
+        <label>φBC（B–C間）</label>
+        <input type="number" id="angBC" step="0.01" placeholder="例: 35.26">
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <h2>探索条件</h2>
+    <div class="row">
+      <div class="field">
+        <label>許容誤差 (±度)</label>
+        <input type="number" id="tol" value="0.5" step="0.1" min="0.01">
+      </div>
+    </div>
+    <div class="row" style="align-items:center;">
+      <label style="display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:13.5px; color:var(--text); cursor:pointer;">
+        <input type="checkbox" id="stdOnly" checked onchange="toggleStdOnly()" style="width:auto;">
+        標準投影図の指数のみで探索する
+      </label>
+    </div>
+    <p style="color:var(--text-dim); font-size:12.5px; margin:6px 0 14px;" id="stdOnlyNote">
+      下の「探索範囲N」で指定した最大成分までの既約な代表指数（100, 110, 111, 210, 211, 221, …）と、
+      その対称的に等価な点（符号・並び替え違い）だけを候補にします。200のように約分できる指数（100と同じ向き）は除外されます。
+    </p>
+    <div class="row" id="customRangeRow">
+      <div class="field">
+        <label id="maxNLabel">指数の探索範囲（最大成分 ≤ N の既約な指数まで）</label>
+        <input type="number" id="maxN" value="4" step="1" min="1" max="8">
+      </div>
+    </div>
+    <div class="row" style="align-items:center;">
+      <label style="display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--text-dim); cursor:pointer;">
+        <input type="checkbox" id="posOnly" style="width:auto;">
+        指数を非負（h,k,l ≥ 0）に限定する（通常はOFFのままにしてください）
+      </label>
+    </div>
+    <p style="color:var(--text-dim); font-size:12.5px; margin:6px 0 0;">
+      ステレオ投影の3点法では、同じ{hkl}族の異なるメンバー（例：[111]と[1,1,−1]）が別々の点として現れるため、
+      符号付きの指数が必要になるのが普通です。このチェックは、3点が明らかに同じ象限にあると分かっている場合のみ使ってください。
+      通常のNは4程度で十分（既存の表と同じ範囲）です。
+    </p>
+    <div class="row">
+      <div class="field" style="display:flex; align-items:flex-end;">
+        <button onclick="solve()">指数を探索する</button>
+      </div>
+    </div>
+
+    <div class="formula" id="formulaText"></div>
+  </div>
+
+  <div id="resultsPanel" class="panel" style="display:none;">
+    <h2>候補一覧</h2>
+    <div class="status" id="statusLine"></div>
+    <div id="resultsBody"></div>
+  </div>
+
+  <p class="note">
+    立方晶では、2つの方向 (h₁k₁l₁)・(h₂k₂l₂) のなす角 φ は
+    cos φ = (h₁h₂＋k₁k₂＋l₁l₂) / [√(h₁²＋k₁²＋l₁²) · √(h₂²＋k₂²＋l₂²)] で与えられます。
+    ステレオ投影を使う3点法では、同じ{hkl}族の異なるメンバー（例：[111]と[1,1,−1]の間は約70.5°）が
+    投影図上の別々の点として現れるため、符号付きの指数を含めて探索するのが基本です。
+    この式を3辺すべてに同時に適用し、φAB・φAC・φBCそれぞれが指定した許容誤差以内かどうかを個別に判定します（3辺の合計ではありません）。
+    条件を満たす組を、3辺のうち最大誤差が小さい順に表示します。
+    同じ三角形に対して立方晶の対称操作で移り合う等価な複数解が現れることがあるので、
+    既知の軸やX線写真の対称性と見比べて実際の方位に合う1組を選んでください。
+  </p>
+
+</div>
+
+<script>
+document.getElementById('formulaText').textContent =
+  'cos φ = (h1h2 + k1k2 + l1l2) / [ √(h1²+k1²+l1²) · √(h2²+k2²+l2²) ]';
+
+// --- sketch pad: freehand drawing + point-placing for "find nearest 3 points" ---
+let sketchMode = 'draw';
+let sketchPoints = [];
+let _sketchCtx = null;
+
+(function(){
+  const canvas = document.getElementById('sketchCanvas');
+  const ctx = canvas.getContext('2d');
+  _sketchCtx = ctx;
+  let drawing = false;
+  let lastX = 0, lastY = 0;
+
+  ctx.strokeStyle = '#E7ECF3';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  function pos(e){
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+  }
+
+  function start(e){
+    e.preventDefault();
+    const p = pos(e);
+    if (sketchMode === 'point'){
+      addSketchPoint(p);
+      return;
+    }
+    drawing = true;
+    lastX = p.x; lastY = p.y;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, ctx.lineWidth/2, 0, Math.PI*2);
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.fill();
+  }
+  function move(e){
+    if (sketchMode === 'point' || !drawing) return;
+    e.preventDefault();
+    const p = pos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    lastX = p.x; lastY = p.y;
+  }
+  function end(){ drawing = false; }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, { passive:false });
+  canvas.addEventListener('touchmove', move, { passive:false });
+  canvas.addEventListener('touchend', end);
+})();
+
+function setSketchMode(){
+  sketchMode = document.getElementById('sketchModePoint').checked ? 'point' : 'draw';
+}
+
+function addSketchPoint(p){
+  sketchPoints.push(p);
+  const idx = sketchPoints.length;
+  const ctx = _sketchCtx;
+  const savedStroke = ctx.strokeStyle, savedWidth = ctx.lineWidth;
+
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, 6, 0, Math.PI*2);
+  ctx.fillStyle = '#F0B86E';
+  ctx.fill();
+  ctx.strokeStyle = '#F0B86E';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = '#0B1220';
+  ctx.font = 'bold 13px "IBM Plex Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(idx), p.x, p.y);
+
+  ctx.strokeStyle = savedStroke;
+  ctx.lineWidth = savedWidth;
+
+  document.getElementById('sketchStatus').textContent =
+    `点 ${idx} を追加しました（合計 ${sketchPoints.length} 点）。3点以上打ったら「近い3点を探す」を押してください。`;
+}
+
+function findNearestTriplet(){
+  const status = document.getElementById('sketchStatus');
+  if (sketchPoints.length < 3){
+    status.textContent = '点が3つ未満です。「点を打つモード」に切り替えて、比較したい点を3つ以上打ってください。';
+    return;
+  }
+  const pts = sketchPoints;
+  let best = null;
+  for(let i=0; i<pts.length; i++){
+    for(let j=i+1; j<pts.length; j++){
+      for(let k=j+1; k<pts.length; k++){
+        const dij = Math.hypot(pts[i].x-pts[j].x, pts[i].y-pts[j].y);
+        const dik = Math.hypot(pts[i].x-pts[k].x, pts[i].y-pts[k].y);
+        const djk = Math.hypot(pts[j].x-pts[k].x, pts[j].y-pts[k].y);
+        const worst = Math.max(dij, dik, djk);
+        if (!best || worst < best.worst){
+          best = { i, j, k, dij, dik, djk, worst };
+        }
+      }
+    }
+  }
+  const ctx = _sketchCtx;
+  const a = pts[best.i], b = pts[best.j], c = pts[best.k];
+  ctx.save();
+  ctx.strokeStyle = '#4FD1C5';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([6,4]);
+  ctx.beginPath();
+  ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.lineTo(c.x,c.y); ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+
+  status.textContent =
+    `最も密集した3点は 点${best.i+1}・点${best.j+1}・点${best.k+1} です` +
+    `（辺の長さ: ${best.dij.toFixed(0)}px, ${best.dik.toFixed(0)}px, ${best.djk.toFixed(0)}px）。` +
+    ' ピクセル距離なので実際の角度ではありません。この3点を候補として、実際の角度をウルフネット等で測って下の入力欄に入れてください。';
+}
+
+function clearSketch(){
+  const canvas = document.getElementById('sketchCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  sketchPoints = [];
+  document.getElementById('sketchStatus').textContent = '';
+}
+
+function toggleSketchEnabled(){
+  const enabled = document.getElementById('sketchEnabled').checked;
+  document.getElementById('sketchBody').style.display = enabled ? 'block' : 'none';
+}
+
+function toggleMode(){
+  const unknown = document.getElementById('modeUnknown').checked;
+  const knownPanel = document.getElementById('knownPanel');
+  const aFields = document.getElementById('aH').closest('.row');
+  const divider = aFields.nextElementSibling; // hr after A fields
+  aFields.style.display = unknown ? 'none' : 'flex';
+  if (divider && divider.classList.contains('divider')) divider.style.display = unknown ? 'none' : 'block';
+
+  const maxNField = document.getElementById('maxN');
+  // Only auto-adjust if the user hasn't already typed a custom value for this mode.
+  if (!maxNField.dataset.userEdited){
+    maxNField.value = unknown ? '2' : '4';
+  }
+
+  document.getElementById('modeNote').textContent = unknown
+    ? '最初の1点目〜3点目を決めるときはこちら。投影図の中心付近は対称性の良い低次指数の軸が集まりやすいので、まずは N=2 程度・小さめの三角形から探すのが安全です。指数が決まったら「既知」モードに切り替えて外側へ広げてください。'
+    : 'A・B・Cのうち少なくとも1面の指数がすでにわかっている場合はこちら。探索が速く、解の絞り込みも安定します。';
+}
+document.getElementById('maxN').addEventListener('input', function(){ this.dataset.userEdited = '1'; });
+
+function updateASub(){
+  const h = document.getElementById('aH').value;
+  const k = document.getElementById('aK').value;
+  const l = document.getElementById('aL').value;
+  document.getElementById('aSub').textContent = h + k + l;
+}
+['aH','aK','aL'].forEach(id => document.getElementById(id).addEventListener('input', updateASub));
+
+function normSq(v){ return v[0]*v[0] + v[1]*v[1] + v[2]*v[2]; }
+
+function angleBetween(v1, v2){
+  const dot = v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+  const n1 = Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]);
+  const n2 = Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1]+v2[2]*v2[2]);
+  let c = dot/(n1*n2);
+  c = Math.max(-1, Math.min(1, c));
+  return Math.acos(c) * 180 / Math.PI;
+}
+
+function fmt(v){
+  return (v[0]<0?'\u0305'+Math.abs(v[0]):v[0]) + '' +
+         (v[1]<0?'\u0305'+Math.abs(v[1]):v[1]) + '' +
+         (v[2]<0?'\u0305'+Math.abs(v[2]):v[2]);
+}
+function plain(v){ return v.join(' '); }
+
+function errClass(e, tol){
+  if (e <= tol*0.4) return 'err-good';
+  if (e <= tol*0.8) return 'err-mid';
+  return 'err-bad';
+}
+
+function gcd2(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ const t=b; b=a%b; a=t; } return a; }
+function gcd3(a,b,c){ return gcd2(gcd2(a,b),c); }
+
+function permutations3(arr){
+  const [a,b,c] = arr;
+  const raw = [
+    [a,b,c],[a,c,b],[b,a,c],[b,c,a],[c,a,b],[c,b,a]
+  ];
+  const seen = new Set();
+  const out = [];
+  for(const p of raw){
+    const key = p.join(',');
+    if (!seen.has(key)){ seen.add(key); out.push(p); }
+  }
+  return out;
+}
+
+function expandFamily(h,k,l){
+  const perms = permutations3([h,k,l]);
+  const seen = new Set();
+  const out = [];
+  for(const p of perms){
+    const signsPerComp = p.map(v => v === 0 ? [0] : [v, -v]);
+    for(const sh of signsPerComp[0]){
+      for(const sk of signsPerComp[1]){
+        for(const sl of signsPerComp[2]){
+          const key = sh+','+sk+','+sl;
+          if (!seen.has(key)){ seen.add(key); out.push([sh,sk,sl]); }
+        }
+      }
+    }
+  }
+  return out;
+}
+
+// Generate the canonical (reduced, h>=k>=l>=0) low-index forms with max component <= N,
+// then expand each into its full set of symmetry-equivalent points (signs + orderings).
+// This is what a standard cubic stereographic projection plots up to index N.
+function standardVecsForN(N){
+  const canon = [];
+  for(let h=1; h<=N; h++){
+    for(let k=0; k<=h; k++){
+      for(let l=0; l<=k; l++){
+        if (gcd3(h,k,l) !== 1) continue; // skip non-reduced (e.g. 200 -> same direction as 100)
+        canon.push([h,k,l]);
+      }
+    }
+  }
+  const seen = new Set();
+  const out = [];
+  for(const [h,k,l] of canon){
+    for(const v of expandFamily(h,k,l)){
+      const key = v.join(',');
+      if (!seen.has(key)){ seen.add(key); out.push(v); }
+    }
+  }
+  return out;
+}
+
+function toggleStdOnly(){
+  const std = document.getElementById('stdOnly').checked;
+  document.getElementById('stdOnlyNote').style.display = std ? 'block' : 'none';
+  document.getElementById('maxNLabel').textContent = std
+    ? '指数の探索範囲（最大成分 ≤ N の既約な指数まで）'
+    : '指数の探索範囲（−N〜N）';
+}
+
+function buildVecs(N){
+  let vecs;
+  if (document.getElementById('stdOnly').checked){
+    vecs = standardVecsForN(N);
+  } else {
+    vecs = [];
+    for(let h=-N; h<=N; h++){
+      for(let k=-N; k<=N; k++){
+        for(let l=-N; l<=N; l++){
+          if (h===0 && k===0 && l===0) continue;
+          vecs.push([h,k,l]);
+        }
+      }
+    }
+  }
+  if (document.getElementById('posOnly').checked){
+    vecs = vecs.filter(v => v[0]>=0 && v[1]>=0 && v[2]>=0);
+  }
+  return vecs;
+}
+
+function solveKnown(angAB, angAC, angBC, tol, N, statusLine, body){
+  const A = [
+    parseInt(document.getElementById('aH').value)||0,
+    parseInt(document.getElementById('aK').value)||0,
+    parseInt(document.getElementById('aL').value)||0
+  ];
+  if (A[0]===0 && A[1]===0 && A[2]===0){
+    statusLine.textContent = '基準面 A の指数を (0 0 0) 以外で入力してください。';
+    body.innerHTML = '';
+    return;
+  }
+
+  const vecs = buildVecs(N);
+
+  const bCandidates = [];
+  for(const v of vecs){
+    const e = Math.abs(angleBetween(A, v) - angAB);
+    if (e <= tol) bCandidates.push({v, e});
+  }
+
+  const solutions = [];
+  for(const bc of bCandidates){
+    const B = bc.v;
+    for(const v of vecs){
+      const eAC = Math.abs(angleBetween(A, v) - angAC);
+      if (eAC > tol) continue;
+      const eBC = Math.abs(angleBetween(B, v) - angBC);
+      if (eBC > tol) continue;
+      solutions.push({ A, B, C: v, eAB: bc.e, eAC, eBC, maxErr: Math.max(bc.e, eAC, eBC), mag: normSq(B) + normSq(v) });
+    }
+  }
+
+  solutions.sort((x,y)=> (x.mag - y.mag) || (x.maxErr - y.maxErr));
+
+  if (solutions.length === 0){
+    statusLine.textContent = '一致する組み合わせが見つかりませんでした。許容誤差を広げるか、探索範囲 N を大きくしてください。';
+    body.innerHTML = '';
+    return;
+  }
+
+  const shown = solutions.slice(0, 80);
+  statusLine.textContent =
+    `${solutions.length} 件の候補が見つかりました（各辺は個別に許容誤差 ±${tol}° 以内。指数の小さい順、同じ大きさなら誤差の小さい順に上位 ${shown.length} 件を表示）。`;
+
+  let html = '<table><thead><tr>' +
+    '<th>面 B (hkl)</th><th>面 C (hkl)</th>' +
+    '<th>計算φAB</th><th>誤差</th>' +
+    '<th>計算φAC</th><th>誤差</th>' +
+    '<th>計算φBC</th><th>誤差</th>' +
+    '</tr></thead><tbody>';
+
+  for(const s of shown){
+    const calcAB = angleBetween(A, s.B);
+    const calcAC = angleBetween(A, s.C);
+    const calcBC = angleBetween(s.B, s.C);
+    html += '<tr>' +
+      `<td class="hkl">${plain(s.B)}</td>` +
+      `<td class="hkl">${plain(s.C)}</td>` +
+      `<td>${calcAB.toFixed(2)}°</td><td class="${errClass(s.eAB,tol)}">${s.eAB.toFixed(2)}°</td>` +
+      `<td>${calcAC.toFixed(2)}°</td><td class="${errClass(s.eAC,tol)}">${s.eAC.toFixed(2)}°</td>` +
+      `<td>${calcBC.toFixed(2)}°</td><td class="${errClass(s.eBC,tol)}">${s.eBC.toFixed(2)}°</td>` +
+      '</tr>';
+  }
+  html += '</tbody></table>';
+  body.innerHTML = html;
+}
+
+function solveUnknown(angAB, angAC, angBC, tol, N, statusLine, body){
+  const capN = Math.min(N, 6); // keep the fully-blind search tractable
+  const vecs = buildVecs(capN);
+
+  const solutions = [];
+  for(const V1 of vecs){
+    // quick pre-filter: V2 candidates matching angle(V1,V2)=angAB
+    const v2list = [];
+    for(const V2 of vecs){
+      const e1 = Math.abs(angleBetween(V1, V2) - angAB);
+      if (e1 <= tol) v2list.push({V2, e1});
+    }
+    if (v2list.length === 0) continue;
+
+    for(const v3 of vecs){
+      const e2 = Math.abs(angleBetween(V1, v3) - angAC);
+      if (e2 > tol) continue;
+      for(const cand of v2list){
+        const e3 = Math.abs(angleBetween(cand.V2, v3) - angBC);
+        if (e3 > tol) continue;
+        solutions.push({
+          A: V1, B: cand.V2, C: v3,
+          eAB: cand.e1, eAC: e2, eBC: e3,
+          maxErr: Math.max(cand.e1, e2, e3),
+          mag: normSq(V1) + normSq(cand.V2) + normSq(v3)
+        });
+      }
+    }
+  }
+
+  solutions.sort((x,y)=> (x.mag - y.mag) || (x.maxErr - y.maxErr));
+
+  if (solutions.length === 0){
+    statusLine.textContent = '一致する組み合わせが見つかりませんでした。許容誤差を広げるか、探索範囲 N を大きくしてください。';
+    body.innerHTML = '';
+    return;
+  }
+
+  const shown = solutions.slice(0, 80);
+  statusLine.textContent =
+    `${solutions.length} 件の候補が見つかりました（各辺は個別に許容誤差 ±${tol}° 以内。指数の小さい順、同じ大きさなら誤差の小さい順に上位 ${shown.length} 件を表示）。` +
+    ' 3点とも未知の全探索では、立方晶の対称操作で互いに移り合う「向きだけ違う」等価解が複数現れます。' +
+    '既に指数がわかっている別の面（結晶軸など）と見比べて、実際の方位に合う1組を選んでください。';
+
+  let html = '<table><thead><tr>' +
+    '<th>点1 (hkl)</th><th>点2 (hkl)</th><th>点3 (hkl)</th>' +
+    '<th>計算φ12</th><th>誤差</th>' +
+    '<th>計算φ13</th><th>誤差</th>' +
+    '<th>計算φ23</th><th>誤差</th>' +
+    '</tr></thead><tbody>';
+
+  for(const s of shown){
+    const calcAB = angleBetween(s.A, s.B);
+    const calcAC = angleBetween(s.A, s.C);
+    const calcBC = angleBetween(s.B, s.C);
+    html += '<tr>' +
+      `<td class="hkl">${plain(s.A)}</td>` +
+      `<td class="hkl">${plain(s.B)}</td>` +
+      `<td class="hkl">${plain(s.C)}</td>` +
+      `<td>${calcAB.toFixed(2)}°</td><td class="${errClass(s.eAB,tol)}">${s.eAB.toFixed(2)}°</td>` +
+      `<td>${calcAC.toFixed(2)}°</td><td class="${errClass(s.eAC,tol)}">${s.eAC.toFixed(2)}°</td>` +
+      `<td>${calcBC.toFixed(2)}°</td><td class="${errClass(s.eBC,tol)}">${s.eBC.toFixed(2)}°</td>` +
+      '</tr>';
+  }
+  html += '</tbody></table>';
+  body.innerHTML = html;
+}
+
+function solve(){
+  const angAB = parseFloat(document.getElementById('angAB').value);
+  const angAC = parseFloat(document.getElementById('angAC').value);
+  const angBC = parseFloat(document.getElementById('angBC').value);
+  const tol = parseFloat(document.getElementById('tol').value) || 0.5;
+  const N = Math.min(8, Math.max(1, parseInt(document.getElementById('maxN').value) || 4));
+
+  const resultsPanel = document.getElementById('resultsPanel');
+  const statusLine = document.getElementById('statusLine');
+  const body = document.getElementById('resultsBody');
+  resultsPanel.style.display = 'block';
+
+  if (isNaN(angAB) || isNaN(angAC) || isNaN(angBC)){
+    statusLine.textContent = '3つの角度をすべて入力してください。';
+    body.innerHTML = '';
+    return;
+  }
+
+  if (document.getElementById('modeUnknown').checked){
+    statusLine.textContent = '探索中…（3点未知モードは少し時間がかかることがあります）';
+    body.innerHTML = '';
+    setTimeout(()=> solveUnknown(angAB, angAC, angBC, tol, N, statusLine, body), 30);
+  } else {
+    solveKnown(angAB, angAC, angBC, tol, N, statusLine, body);
+  }
+}
+</script>
+</body>
+</html>
